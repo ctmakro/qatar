@@ -62,18 +62,18 @@ def gen():
 
     y = model(x-0.5)
 
-    sigmred = tf.nn.sigmoid(y[:,:,2:3])
+    sigmred = tf.nn.sigmoid(y[:,:,:,2:3])
     
-    importance = gt[:,:,2:3]
+    importance = gt[:,:,:,2:3]
     # ratios = tf.reduce_mean(importance,axis=[1,2,3],keep_dims=True)
     # scaled_importance = importance/ratios
 
-    sqrdiff = (y[:,:,0:2]-gt[:,:,0:2])**2
+    sqrdiff = (y[:,:,:,0:2]-gt[:,:,:,0:2])**2
     
     #loss = tf.reduce_mean(sqrdiff * importance) + \
-    #   ct.mean_sigmoid_cross_entropy_loss(y[:,:,2:3],gt[:,:,2:3]) * 0.01
+    #   ct.mean_sigmoid_cross_entropy_loss(y[:,:,:,2:3],gt[:,:,:,2:3]) * 0.01
 
-    celoss = ct.mean_sigmoid_cross_entropy_loss(y[:,:,2:3],gt[:,:,2:3])
+    celoss = ct.mean_sigmoid_cross_entropy_loss(y[:,:,:,2:3],gt[:,:,:,2:3])
     loss = celoss
     
     opt = tf.train.AdamOptimizer(1e-3)
@@ -122,7 +122,7 @@ def t():
     
     y[:,:,:,2:3] = sigmred
 
-    vis.show_batch_autoscaled(res,name='output')
+    vis.show_batch_autoscaled(y,name='output')
     vis.show_batch_autoscaled(qr,name='input')
     vis.show_batch_autoscaled(uv,name='gt')
 
