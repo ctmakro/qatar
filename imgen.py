@@ -133,15 +133,29 @@ def random_qr_pipeline(ol=128,dirty=True):
     qrout = np.mean(qrout,axis=2,keepdims=True) # 1-channel
 
     if dirty:
+        linepollute(qrout,10)
+
         # distort
         qrout,uvout = distort(qrout,uvout,k=31,scale=150)
 
         # add low freq pollution
-        qrout = pollute(qrout,k=5,scale=1.0)
+        qrout = pollute(qrout,k=5,scale=.5)
         # qrout = pollute(qrout,k=11,scale=1.5)
-        qrout = pollute(qrout,k=21,scale=2.5)
+        # linepollute(qrout,10)
+        qrout = pollute(qrout,k=21,scale=6)
+        # linepollute(qrout,5)
+
+    qrout = np.clip(qrout,a_min=0.0,a_max=1.0)
 
     return uvout,qrout
+
+def linepollute(i,q=1):
+    for k in range(q):
+        brightness = r(1)
+        ih,iw = i.shape[0:2]
+        start = int(r(iw)),int(r(ih))
+        end = int(r(iw)),int(r(ih))
+        cv2.line(i,start,end,(brightness,),k%2+1)
 
 def pollute(i,k=11,scale=1.0):
     noise = pollution(i,k,scale)
