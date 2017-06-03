@@ -5,22 +5,51 @@ from canton import *
 
 def buildmodel():
     c = Can()
-
+    
+    '''
     [c.add(can) for can in
     [
-    Conv2D(1,32,k=5,usebias=True),
-    Conv2D(32,32,k=5,usebias=False),
-    # AvgPool2D(k=2,std=1),
-    Conv2D(32,32,k=5,usebias=False),
-    Conv2D(32,32,k=5,usebias=False),
-    # Conv2D(32,32,k=5,usebias=False),
-    Conv2D(32,32,k=5,usebias=False),
-    # Up2D(scale=2),
-    Conv2D(32,32,k=5,usebias=False),
+    Conv2D(1,32,k=5,usebias=True), Act('relu'),
+    Conv2D(32,32,k=5,usebias=False), Act('relu'),
+    AvgPool2D(k=2,std=2),
+    Conv2D(32,32,k=5,usebias=False), Act('relu'),
+    AvgPool2D(k=2,std=2),
+    Conv2D(32,32,k=5,usebias=False), Act('relu'),
+    AvgPool2D(k=2,std=2),
+    Conv2D(32,32,k=5,usebias=False), Act('relu'),
+    #AvgPool2D(k=2,std=2),
+    Conv2D(32,32,k=5,usebias=False), Act('relu'),
+    Conv2D(32,32,k=5,usebias=False), Act('relu'),
+    #Up2D(scale=2),
+    Conv2D(32,32,k=5,usebias=False), Act('relu'),
+    Up2D(scale=2),
+    Conv2D(32,32,k=5,usebias=False), Act('relu'),
+    Up2D(scale=2),
+    Conv2D(32,32,k=5,usebias=False), Act('relu'),
+    Up2D(scale=2),
+    Conv2D(32,32,k=5,usebias=False), Act('relu'),
+    Conv2D(32,32,k=5,usebias=False), Act('relu'),
     Conv2D(32,3,k=5,usebias=True),
     ]
     ]
-
+    '''
+    
+    [c.add(can) for can in 
+    [
+    Conv2D(1,32,k=3), Act('relu'),
+    ResConv(32,32),
+    ResConv(32,32),
+    ResConv(32,64),
+    ResConv(64,64),
+    ResConv(64,64),
+    ResConv(64,64),
+    ResConv(64,64),
+    ResConv(64,64),
+    ResConv(64,64),
+    ResConv(64,64),
+    Conv2D(64,3,k=1),
+    ]
+    ]
     c.chain()
     return c
 
@@ -33,28 +62,35 @@ def gen():
 
     y = model(x-0.5)
 
+    sigmred = tf.nn.sigmoid(y[:,:,2:3])
+    
     importance = gt[:,:,2:3]
     # ratios = tf.reduce_mean(importance,axis=[1,2,3],keep_dims=True)
     # scaled_importance = importance/ratios
 
-    loss = tf.reduce_mean((y[:,:,0:2]-gt[:,:,0:2]) ** 2 * importance)+ \
-        tf.reduce_mean((y[:,:,2:3]-importance)**2)
+    sqrdiff = (y[:,:,0:2]-gt[:,:,0:2])**2
+    
+    #loss = tf.reduce_mean(sqrdiff * importance) + \
+    #   ct.mean_sigmoid_cross_entropy_loss(y[:,:,2:3],gt[:,:,2:3]) * 0.01
 
-    opt = tf.train.AdamOptimizer()
+    celoss = ct.mean_sigmoid_cross_entropy_loss(y[:,:,2:3],gt[:,:,2:3])
+    loss = celoss
+    
+    opt = tf.train.AdamOptimizer(1e-3)
 
     train_step = opt.minimize(loss,var_list=model.get_weights())
 
     sess = ct.get_session()
     def feed(qr,uv):
-        res = sess.run([train_step,loss,y],feed_dict={
+        res = sess.run([train_step,loss],feed_dict={
             x:qr,gt:uv
         })
-        return res[1:]
+        return res[1]
 
     def test(qr):
-        res = sess.run([y],feed_dict={
+        res = sess.run([y,sigmred],feed_dict={
             x:qr
-        })[0]
+        })
         return res
 
     return feed,test
@@ -69,8 +105,8 @@ def r(ep=1):
 
         uv,qr = pour(20)
 
-        loss,y = feed(qr,uv)
-        vis.show_batch_autoscaled(y,name='output')    
+        loss = feed(qr,uv)
+        # vis.show_batch_autoscaled(y,name='output')    
         
         print('loss',loss)
         
@@ -78,10 +114,13 @@ def r(ep=1):
             t()
 
 from cv2tools import vis
+    
 def t():
     uv,qr = pour(10)
 
-    res = test(qr)
+    y,sigmred = test(qr)
+    
+    y[:,:,:,2:3] = sigmred
 
     vis.show_batch_autoscaled(res,name='output')
     vis.show_batch_autoscaled(qr,name='input')
