@@ -75,8 +75,8 @@ def random_qr_pipeline(ol=128,dirty=True):
 
     qrimg, uvimg = qr(
         randomstring,
-        box_size=int(3+r(5)),
-        border=int(r(6))
+        box_size=int(3+r(2)),
+        border=int(r(3))
     )
 
     qrimg = qrimg / 255. # normalize
@@ -93,6 +93,10 @@ def random_qr_pipeline(ol=128,dirty=True):
     randomangle = r(360)
     randomscale = .5 + r(1)
 
+    # translation
+    randomx = int(r(30)-15)
+    randomy = int(r(30)-15)
+
     # ol = 128
     ol = ol
     dol = int(ol*2)
@@ -107,7 +111,7 @@ def random_qr_pipeline(ol=128,dirty=True):
 
     # alpha_composite
     offset = int(ol-qr_rotated.shape[0]/2)
-    offset = [offset,offset]
+    offset = [offset+randomy,offset+randomx]
 
     uv_noisy = filt.alpha_composite(
         bg = noisy*0,
@@ -133,7 +137,7 @@ def random_qr_pipeline(ol=128,dirty=True):
         qrout,uvout = distort(qrout,uvout,k=31,scale=150)
 
         # add low freq pollution
-        qrout = pollute(qrout,k=7,scale=1.0)
+        qrout = pollute(qrout,k=5,scale=1.0)
         # qrout = pollute(qrout,k=11,scale=1.5)
         qrout = pollute(qrout,k=21,scale=2.5)
 
@@ -150,52 +154,60 @@ def pollution(i,k=11,scale=1.0,loc=0.0):
     noise = tcify(noise,1)
     return noise
 
-def distort(i1,i2,k=11,scale=1.0):
+def distort(i1,i2,k=11,scale=1.0): # displace with grace
     hi1 = cv2.pyrUp(i1)
     hi1 = tcify(hi1,1)
-    res1 = hi1.copy()
+    # res1 = hi1.copy()
 
     hi2 = cv2.pyrUp(i2)
-    # hi2 = tcify(hi2,1)
-    res2 = hi2.copy()
+    # res2 = hi2.copy()
 
     displace_x = pollution(hi1,k,scale)
-    displace_y = pollution(hi1,k,scale)
+    displace_y = pollution(hi1,k,scale) # H W C
+
+    displace_x.shape = displace_x.shape[0:2] # H W
+    displace_y.shape = displace_y.shape[0:2]
 
     ih,iw = hi1.shape[0:2]
 
-    rowimg,colimg = np.mgrid[0:ih,0:iw].astype('float32')
+    rowimg,colimg = np.mgrid[0:ih,0:iw]
 
-    def clampy(j):
-        return min(max(j,0),hi1.shape[0]-1)
-    def clampx(j):
-        return min(max(j,0),hi1.shape[1]-1)
+    # def clampy(j):
+    #     return min(max(j,0),hi1.shape[0]-1)
+    # def clampx(j):
+    #     return min(max(j,0),hi1.shape[1]-1)
 
-    rowimg = tcify(rowimg,1)
-    colimg = tcify(colimg,1)
+    rowimg += displace_y.astype('int32')
+    colimg += displace_x.astype('int32')
 
-    rowimg += displace_y
-    colimg += displace_x
+    # def old_displace_algor():
+    #     rowimg = np.clip(rowimg,a_max=hi1.shape[0]-1,a_min=0).astype('uint32')
+    #     colimg = np.clip(colimg,a_max=hi1.shape[1]-1,a_min=0).astype('uint32')
+    #
+    #     for row in range(hi1.shape[0]):
+    #         for col in range(hi1.shape[1]):
+    #             # dx = displace_x[row,col,0]
+    #             # dy = displace_y[row,col,0]
+    #
+    #             dx = colimg[row,col,0]
+    #             dy = rowimg[row,col,0]
+    #
+    #             res1[row,col,:] = hi1[dy,dx,:]
+    #             res2[row,col,:] = hi2[dy,dx,:]
 
-    rowimg = np.clip(rowimg,a_max=hi1.shape[0]-1,a_min=0).astype('uint32')
-    colimg = np.clip(colimg,a_max=hi1.shape[1]-1,a_min=0).astype('uint32')
+    rowimg = np.clip(rowimg,a_max=hi1.shape[0]-1,a_min=0)
+    colimg = np.clip(colimg,a_max=hi1.shape[1]-1,a_min=0)
 
-    for row in range(hi1.shape[0]):
-        for col in range(hi1.shape[1]):
-            # dx = displace_x[row,col,0]
-            # dy = displace_y[row,col,0]
+    res1 = hi1[rowimg,colimg]
+    res2 = hi2[rowimg,colimg]
 
-            dx = colimg[row,col,0]
-            dy = rowimg[row,col,0]
-
-            res1[row,col,:] = hi1[dy,dx,:]
-            res2[row,col,:] = hi2[dy,dx,:]
+    # print(res1.shape,res2.shape)
 
     return tcify(cv2.pyrDown(res1),1), cv2.pyrDown(res2)
 
 def qrtest():
 
-    uvout,qrout = random_qr_pipeline(128,dirty=False)
+    uvout,qrout = random_qr_pipeline(128,dirty=True)
 
     print('uvout',uvout.shape,'qrout',qrout.shape)
 
@@ -216,27 +228,13 @@ dek = deque()
 def fill():
     while True:
         if len(dek) < 200:
-            uvout,qrout = random_qr_pipeline(128,dirty=False)
+            uvout,qrout = random_qr_pipeline(128,dirty=True)
 
-            uvoutt = np.transpose(uvout,(1,0,2))
-            qroutt = np.transpose(qrout,(1,0,2))
-
-            uvout1 = np.flip(uvoutt,0)
-            qrout1 = np.flip(qroutt,0)
-
-            uvout2 = np.flip(uvoutt,1)
-            qrout2 = np.flip(qroutt,1)
-
-            qrout3 = np.flip(qrout,0)
-            qrout3 = np.flip(qrout3,1)
-
-            uvout3 = np.flip(uvout,0)
-            uvout3 = np.flip(uvout3,1)
+            l = [(np.rot90(uvout,i),np.rot90(qrout,i))
+            for i in [1,2,3]]
 
             dek.append((uvout,qrout))
-            dek.append((uvout1,qrout1))
-            dek.append((uvout2,qrout2))
-            dek.append((uvout3,qrout3))
+            [dek.append(t) for t in l]
 
         else:
             return
