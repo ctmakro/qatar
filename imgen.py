@@ -216,7 +216,7 @@ dek = deque()
 def fill():
     while True:
         if len(dek) < 200:
-            uvout,qrout = random_qr_pipeline(128)
+            uvout,qrout = random_qr_pipeline(128,dirty=False)
 
             uvoutt = np.transpose(uvout,(1,0,2))
             qroutt = np.transpose(qrout,(1,0,2))
