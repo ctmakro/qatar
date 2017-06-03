@@ -51,7 +51,7 @@ def qr(string,box_size=8,border=2):
 
     uvimg[:,:,0] = u # ucoord
     uvimg[:,:,1] = v # vcoord
-    uvimg[:,:,2] = 1 # qrsection
+    uvimg[:,:,2] = a # qrsection
     uvimg[:,:,3] = 1 # alpha channel
 
     return qrimgarr,uvimg
