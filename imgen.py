@@ -99,8 +99,8 @@ def random_qr_pipeline(ol=128,dirty=True):
     randomscale = .5 + r(1)
 
     # translation
-    randomx = int(r(30)-15)
-    randomy = int(r(30)-15)
+    randomx = int(r(50)-25)
+    randomy = int(r(50)-25)
 
     # ol = 128
     ol = ol
