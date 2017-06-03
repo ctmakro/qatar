@@ -81,6 +81,11 @@ def random_qr_pipeline(ol=128,dirty=True):
 
     qrimg = qrimg / 255. # normalize
 
+    # randomly add some negative examples
+    if r(1)>0.6:
+        uvimg[:,:,2:3] = 0
+        qrimg[:,:,0:1] = 0 if r(1)>0.5 else 1
+
     # bias and gain
     randombias = r(0.5) - .25
     randomgain = r(.5)+.1
