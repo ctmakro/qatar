@@ -46,10 +46,10 @@ def gen():
 
     sess = ct.get_session()
     def feed(qr,uv):
-        res = sess.run([train_step,loss],feed_dict={
+        res = sess.run([train_step,loss,y],feed_dict={
             x:qr,gt:uv
         })
-        return res[1]
+        return res[1:]
 
     def test(qr):
         res = sess.run([y],feed_dict={
@@ -69,8 +69,13 @@ def r(ep=1):
 
         uv,qr = pour(20)
 
-        loss = feed(qr,uv)
+        loss,y = feed(qr,uv)
+        vis.show_batch_autoscaled(y,name='output')    
+        
         print('loss',loss)
+        
+        if i%10==0:
+            t()
 
 from cv2tools import vis
 def t():
@@ -78,6 +83,7 @@ def t():
 
     res = test(qr)
 
-    vis.show_batch_autoscaled(res,name='test')
+    vis.show_batch_autoscaled(res,name='output')
     vis.show_batch_autoscaled(qr,name='input')
     vis.show_batch_autoscaled(uv,name='gt')
+

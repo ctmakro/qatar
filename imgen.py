@@ -258,7 +258,7 @@ def pour(num=20):
     return np.array(uvouts),np.array(qrouts)
 
 import threading as th
-samplethread = [None,None]
+samplethread = [None,None,None,None]
 
 def startThreads():
     for i in range(len(samplethread)):
