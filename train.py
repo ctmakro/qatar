@@ -6,7 +6,7 @@ from canton import *
 def buildmodel():
     c = Can()
     
-    '''
+    
     [c.add(can) for can in
     [
     Conv2D(1,32,k=5,usebias=True), Act('relu'),
@@ -32,11 +32,11 @@ def buildmodel():
     Conv2D(32,3,k=5,usebias=True),
     ]
     ]
-    '''
     
+    '''
     [c.add(can) for can in 
     [
-    Conv2D(1,32,k=3), Act('relu'),
+    Conv2D(1,32,k=5), Act('relu'),
     ResConv(32,32),
     ResConv(32,32),
     ResConv(32,64),
@@ -46,10 +46,10 @@ def buildmodel():
     ResConv(64,64),
     ResConv(64,64),
     ResConv(64,64),
-    ResConv(64,64),
-    Conv2D(64,3,k=1),
+    Conv2D(64,3,k=5),
     ]
     ]
+    '''
     c.chain()
     return c
 
@@ -72,9 +72,9 @@ def gen():
     
     #loss = tf.reduce_mean(sqrdiff * importance) + \
     #   ct.mean_sigmoid_cross_entropy_loss(y[:,:,:,2:3],gt[:,:,:,2:3]) * 0.01
-
-    celoss = ct.mean_sigmoid_cross_entropy_loss(y[:,:,:,2:3],gt[:,:,:,2:3])
-    loss = celoss
+    rmsloss = tf.reduce_mean(sqrdiff * importance)
+    celoss = ct.mean_sigmoid_cross_entropy_loss(y[:,:,:,2:3],importance)
+    loss = celoss + rmsloss
     
     opt = tf.train.AdamOptimizer(1e-3)
 
