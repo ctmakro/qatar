@@ -186,18 +186,18 @@ def distort(i1,i2,k=11,scale=1.0): # displace with grace
 
     displace_x.shape = displace_x.shape[0:2] # H W
     displace_y.shape = displace_y.shape[0:2]
-
-    ih,iw = hi1.shape[0:2]
-
-    rowimg,colimg = np.mgrid[0:ih,0:iw]
+    #
+    # ih,iw = hi1.shape[0:2]
+    #
+    # rowimg,colimg = np.mgrid[0:ih,0:iw]
 
     # def clampy(j):
     #     return min(max(j,0),hi1.shape[0]-1)
     # def clampx(j):
     #     return min(max(j,0),hi1.shape[1]-1)
 
-    rowimg += displace_y.astype('int32')
-    colimg += displace_x.astype('int32')
+    # rowimg += displace_y.astype('int32')
+    # colimg += displace_x.astype('int32')
 
     # def old_displace_algor():
     #     rowimg = np.clip(rowimg,a_max=hi1.shape[0]-1,a_min=0).astype('uint32')
@@ -214,11 +214,14 @@ def distort(i1,i2,k=11,scale=1.0): # displace with grace
     #             res1[row,col,:] = hi1[dy,dx,:]
     #             res2[row,col,:] = hi2[dy,dx,:]
 
-    rowimg = np.clip(rowimg,a_max=hi1.shape[0]-1,a_min=0)
-    colimg = np.clip(colimg,a_max=hi1.shape[1]-1,a_min=0)
+    # rowimg = np.clip(rowimg,a_max=hi1.shape[0]-1,a_min=0)
+    # colimg = np.clip(colimg,a_max=hi1.shape[1]-1,a_min=0)
+    #
+    # res1 = hi1[rowimg,colimg]
+    # res2 = hi2[rowimg,colimg]
 
-    res1 = hi1[rowimg,colimg]
-    res2 = hi2[rowimg,colimg]
+    res1 = filt.displace(hi1,displace_y,displace_x)
+    res2 = filt.displace(hi2,displace_y,displace_x)
 
     # print(res1.shape,res2.shape)
 
